@@ -1,12 +1,5 @@
 package io.flutter.plugins.videoplayer;
 
-import static com.google.android.exoplayer2.Player.REPEAT_MODE_ALL;
-import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
-
-import android.content.Context;
-import android.net.Uri;
-import android.os.Build;
-import android.view.Surface;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -16,9 +9,12 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Player.EventListener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.audio.AudioAttributes;
+import com.google.android.exoplayer2.ext.ima.ImaAdsLoader;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ads.AdsLoader;
+import com.google.android.exoplayer2.source.ads.AdsMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
@@ -31,13 +27,27 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
-import io.flutter.plugin.common.EventChannel;
-import io.flutter.view.TextureRegistry;
+
+import android.content.Context;
+import android.net.Uri;
+import android.os.Build;
+import android.view.Surface;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.Nullable;
+import io.flutter.plugin.common.EventChannel;
+import io.flutter.view.TextureRegistry;
+
+import static com.google.android.exoplayer2.Player.REPEAT_MODE_ALL;
+import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
 
 final class VideoPlayer {
   private static final String FORMAT_SS = "ss";
@@ -46,6 +56,8 @@ final class VideoPlayer {
   private static final String FORMAT_OTHER = "other";
 
   private SimpleExoPlayer exoPlayer;
+
+  private ImaAdsLoader adsLoader;
 
   private Surface surface;
 
@@ -72,7 +84,9 @@ final class VideoPlayer {
 
     TrackSelector trackSelector = new DefaultTrackSelector();
     exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
+    adsLoader = new ImaAdsLoader(context, Uri.parse("https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="));
 
+    adsLoader.setPlayer(exoPlayer);
     Uri uri = Uri.parse(dataSource);
 
     DataSource.Factory dataSourceFactory;
@@ -88,8 +102,14 @@ final class VideoPlayer {
       dataSourceFactory = new DefaultDataSourceFactory(context, "ExoPlayer");
     }
 
+
+
     MediaSource mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint, context);
-    exoPlayer.prepare(mediaSource);
+
+    AdsMediaSource adsMediaSource =
+            new AdsMediaSource(mediaSource, dataSourceFactory, adsLoader, new FakeOverlay(context));
+
+    exoPlayer.prepare(adsMediaSource);
 
     setupVideoPlayer(eventChannel, textureEntry);
   }
@@ -278,6 +298,7 @@ final class VideoPlayer {
     if (isInitialized) {
       exoPlayer.stop();
     }
+    adsLoader.setPlayer(null);
     textureEntry.release();
     eventChannel.setStreamHandler(null);
     if (surface != null) {
@@ -286,5 +307,25 @@ final class VideoPlayer {
     if (exoPlayer != null) {
       exoPlayer.release();
     }
+  }
+}
+
+class FakeOverlay implements AdsLoader.AdViewProvider {
+
+  final Context context;
+
+  @Nullable
+  @Override
+  public ViewGroup getAdViewGroup() {
+    return new  FrameLayout(context);
+  }
+
+  @Override
+  public View[] getAdOverlayViews() {
+    return new View[0];
+  }
+
+  FakeOverlay(Context context) {
+    this.context = context;
   }
 }
