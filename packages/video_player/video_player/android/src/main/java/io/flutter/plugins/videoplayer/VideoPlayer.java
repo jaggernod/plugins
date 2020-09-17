@@ -102,9 +102,7 @@ final class VideoPlayer {
     } else {
       dataSourceFactory = new DefaultDataSourceFactory(context, "ExoPlayer");
     }
-
-
-
+    
     MediaSource mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint, context);
 
     AdsMediaSource adsMediaSource =
