@@ -1,5 +1,6 @@
 package io.flutter.plugins.videoplayer;
 
+import com.google.ads.interactivemedia.v3.api.AdEvent;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -7,6 +8,7 @@ import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Player.EventListener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.ext.ima.ImaAdsLoader;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
@@ -30,6 +32,7 @@ import com.google.android.exoplayer2.util.Util;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,7 +51,7 @@ import io.flutter.view.TextureRegistry;
 import static com.google.android.exoplayer2.Player.REPEAT_MODE_ALL;
 import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
 
-final class VideoPlayer {
+final class VideoPlayer implements AdEvent.AdEventListener {
   private static final String FORMAT_SS = "ss";
   private static final String FORMAT_DASH = "dash";
   private static final String FORMAT_HLS = "hls";
@@ -65,6 +68,7 @@ final class VideoPlayer {
   private QueuingEventSink eventSink = new QueuingEventSink();
 
   private final EventChannel eventChannel;
+  private final FrameLayout layout;
 
   private boolean isInitialized = false;
 
@@ -76,14 +80,22 @@ final class VideoPlayer {
       TextureRegistry.SurfaceTextureEntry textureEntry,
       String dataSource,
       String formatHint,
-      VideoPlayerOptions options) {
+      VideoPlayerOptions options,
+      FrameLayout layout) {
     this.eventChannel = eventChannel;
     this.textureEntry = textureEntry;
+    this.layout = layout;
     this.options = options;
 
     TrackSelector trackSelector = new DefaultTrackSelector();
     exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
-    adsLoader = new ImaAdsLoader(context, Uri.parse("https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="));
+
+    // From
+    // https://developers.google.com/interactive-media-ads/docs/sdks/html5/client-side/tags
+
+    final Uri adTag = Uri
+            .parse("https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator=");
+    adsLoader = new ImaAdsLoader.Builder(context).setAdEventListener(this).buildForAdTag(adTag);
 
     adsLoader.setPlayer(exoPlayer);
     Uri uri = Uri.parse(dataSource);
@@ -101,12 +113,10 @@ final class VideoPlayer {
       dataSourceFactory = new DefaultDataSourceFactory(context, "ExoPlayer");
     }
 
-
-
     MediaSource mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint, context);
 
     AdsMediaSource adsMediaSource =
-            new AdsMediaSource(mediaSource, dataSourceFactory, adsLoader, new FakeOverlay(context));
+            new AdsMediaSource(mediaSource, dataSourceFactory, adsLoader, new FakeOverlay(context, layout));
 
     exoPlayer.prepare(adsMediaSource);
 
@@ -299,16 +309,22 @@ final class VideoPlayer {
       exoPlayer.release();
     }
   }
+
+  @Override
+  public void onAdEvent(AdEvent adEvent) {
+    Log.w("SSSSSSSSSSSS", "Ad event type" + adEvent.getType());
+  }
 }
 
 class FakeOverlay implements AdsLoader.AdViewProvider {
 
   final Context context;
+  final FrameLayout layout;
 
   @Nullable
   @Override
   public ViewGroup getAdViewGroup() {
-    return new  FrameLayout(context);
+    return layout;
   }
 
   @Override
@@ -316,7 +332,8 @@ class FakeOverlay implements AdsLoader.AdViewProvider {
     return new View[0];
   }
 
-  FakeOverlay(Context context) {
+  FakeOverlay(Context context, FrameLayout layout) {
     this.context = context;
+    this.layout = layout;
   }
 }
