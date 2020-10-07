@@ -9,6 +9,7 @@ import android.os.Build;
 import android.util.Log;
 import android.util.LongSparseArray;
 import io.flutter.embedding.engine.loader.FlutterLoader;
+import android.widget.FrameLayout;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
@@ -31,6 +32,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
   private final LongSparseArray<VideoPlayer> videoPlayers = new LongSparseArray<>();
   private FlutterState flutterState;
   private VideoPlayerOptions options = new VideoPlayerOptions();
+  private  FrameLayout layout;
 
   /** Register this with the v2 embedding for the plugin to respond to lifecycle callbacks. */
   public VideoPlayerPlugin() {}
@@ -79,9 +81,15 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
         new FlutterState(
             binding.getApplicationContext(),
             binding.getBinaryMessenger(),
-            flutterLoader::getLookupKeyForAsset,
-            flutterLoader::getLookupKeyForAsset,
-            binding.getTextureRegistry());
+            FlutterMain::getLookupKeyForAsset,
+            FlutterMain::getLookupKeyForAsset,
+            binding.getFlutterEngine().getRenderer());
+
+    layout = new FrameLayout(binding.getApplicationContext());
+    binding
+            .getPlatformViewRegistry()
+            .registerViewFactory("NativeViewFactoryVideo", new NativeViewFactory(layout));
+
     flutterState.startListening(this, binding.getBinaryMessenger());
   }
 
@@ -92,6 +100,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
     }
     flutterState.stopListening(binding.getBinaryMessenger());
     flutterState = null;
+    layout = null;
   }
 
   private void disposeAllPlayers() {
@@ -137,7 +146,8 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
               handle,
               "asset:///" + assetLookupKey,
               null,
-              options);
+              options,
+              layout);
       videoPlayers.put(handle.id(), player);
     } else {
       player =
@@ -147,7 +157,8 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
               handle,
               arg.getUri(),
               arg.getFormatHint(),
-              options);
+              options,
+              layout);
       videoPlayers.put(handle.id(), player);
     }
 
