@@ -2,7 +2,6 @@ package io.flutter.plugins.videoplayer;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
@@ -10,9 +9,8 @@ import com.google.android.exoplayer2.Player.EventListener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.ext.ima.ImaAdsLoader;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.ads.AdsLoader;
 import com.google.android.exoplayer2.source.ads.AdsMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
@@ -55,15 +53,15 @@ final class VideoPlayer {
   private static final String FORMAT_HLS = "hls";
   private static final String FORMAT_OTHER = "other";
 
-  private SimpleExoPlayer exoPlayer;
+  private final SimpleExoPlayer exoPlayer;
 
-  private ImaAdsLoader adsLoader;
+  private final ImaAdsLoader adsLoader;
 
   private Surface surface;
 
   private final TextureRegistry.SurfaceTextureEntry textureEntry;
 
-  private QueuingEventSink eventSink = new QueuingEventSink();
+  private final QueuingEventSink eventSink = new QueuingEventSink();
 
   private final EventChannel eventChannel;
 
@@ -82,8 +80,8 @@ final class VideoPlayer {
     this.textureEntry = textureEntry;
     this.options = options;
 
-    TrackSelector trackSelector = new DefaultTrackSelector();
-    exoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
+    TrackSelector trackSelector = new DefaultTrackSelector(context);
+    exoPlayer = new SimpleExoPlayer.Builder(context).setTrackSelector(trackSelector).build();
     adsLoader = new ImaAdsLoader(context, Uri.parse("https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="));
 
     adsLoader.setPlayer(exoPlayer);
@@ -160,8 +158,7 @@ final class VideoPlayer {
       case C.TYPE_HLS:
         return new HlsMediaSource.Factory(mediaDataSourceFactory).createMediaSource(uri);
       case C.TYPE_OTHER:
-        return new ExtractorMediaSource.Factory(mediaDataSourceFactory)
-            .setExtractorsFactory(new DefaultExtractorsFactory())
+        return new ProgressiveMediaSource.Factory(mediaDataSourceFactory)
             .createMediaSource(uri);
       default:
         {
