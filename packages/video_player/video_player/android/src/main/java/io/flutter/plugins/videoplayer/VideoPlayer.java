@@ -34,7 +34,6 @@ import android.os.Build;
 import android.util.Log;
 import android.view.Surface;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,7 +65,6 @@ final class VideoPlayer implements AdEvent.AdEventListener {
   private final QueuingEventSink eventSink = new QueuingEventSink();
 
   private final EventChannel eventChannel;
-  private final FrameLayout layout;
 
   private boolean isInitialized = false;
 
@@ -79,10 +77,9 @@ final class VideoPlayer implements AdEvent.AdEventListener {
       String dataSource,
       String formatHint,
       VideoPlayerOptions options,
-      FrameLayout layout) {
+      ViewGroup container) {
     this.eventChannel = eventChannel;
     this.textureEntry = textureEntry;
-    this.layout = layout;
     this.options = options;
 
     TrackSelector trackSelector = new DefaultTrackSelector(context);
@@ -121,7 +118,7 @@ final class VideoPlayer implements AdEvent.AdEventListener {
                       new DataSpec(Uri.parse(options.adTag)),
                       new ProgressiveMediaSource.Factory(dataSourceFactory),
                       adsLoader,
-                      new FakeOverlay(layout)
+                      new FakeOverlay(container)
               );
 
       exoPlayer.setMediaSource(adsMediaSource);
@@ -334,21 +331,38 @@ final class VideoPlayer implements AdEvent.AdEventListener {
 
   @Override
   public void onAdEvent(AdEvent adEvent) {
-    Log.w("SSSSSSSSSSSS", "Ad event type" + adEvent.getType());
+    Log.i("Ad Event", "Type: " + adEvent.getType());
+
+    sendAdvertisementUpdate(adEvent);
   }
+
+  void sendAdvertisementUpdate(AdEvent adEvent) {
+    final AdEvent.AdEventType type = adEvent.getType();
+    Map<String, Object> event = new HashMap<>();
+
+   if (type == AdEvent.AdEventType.CONTENT_PAUSE_REQUESTED) {
+     event.put("event", "advertisementStart");
+     eventSink.success(event);
+   } else if (type == AdEvent.AdEventType.CONTENT_RESUME_REQUESTED) {
+     event.put("event", "advertisementEnd");
+     eventSink.success(event);
+   }
+  }
+
 }
 
 class FakeOverlay implements AdsLoader.AdViewProvider {
 
-  final FrameLayout layout;
+  final ViewGroup container;
+
+  FakeOverlay(ViewGroup container) {
+    this.container = container;
+  }
 
   @Nullable
   @Override
   public ViewGroup getAdViewGroup() {
-    return layout;
+    return container;
   }
 
-  FakeOverlay(FrameLayout layout) {
-    this.layout = layout;
-  }
 }

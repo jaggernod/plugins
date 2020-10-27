@@ -225,6 +225,7 @@ class VideoEvent {
     this.duration,
     this.size,
     this.buffered,
+    this.advertisementPresent,
   });
 
   /// The type of the event.
@@ -245,6 +246,8 @@ class VideoEvent {
   /// Only used if [eventType] is [VideoEventType.bufferingUpdate].
   final List<DurationRange> buffered;
 
+  final bool advertisementPresent;
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -253,6 +256,7 @@ class VideoEvent {
             eventType == other.eventType &&
             duration == other.duration &&
             size == other.size &&
+            advertisementPresent == other.advertisementPresent &&
             listEquals(buffered, other.buffered);
   }
 
@@ -261,6 +265,7 @@ class VideoEvent {
       eventType.hashCode ^
       duration.hashCode ^
       size.hashCode ^
+      advertisementPresent.hashCode ^
       buffered.hashCode;
 }
 
@@ -283,6 +288,10 @@ enum VideoEventType {
 
   /// The video stopped to buffer.
   bufferingEnd,
+
+  advertisementStart,
+
+  advertisementEnd,
 
   /// An unknown event has been received.
   unknown,

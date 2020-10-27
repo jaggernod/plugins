@@ -36,6 +36,7 @@ class VideoPlayerValue {
     this.isPlaying = false,
     this.isLooping = false,
     this.isBuffering = false,
+    this.isAdPlaying = false,
     this.volume = 1.0,
     this.playbackSpeed = 1.0,
     this.errorDescription,
@@ -111,6 +112,9 @@ class VideoPlayerValue {
     return aspectRatio;
   }
 
+  /// True if ad is playing
+  final bool isAdPlaying;
+
   /// Returns a new instance that has the same values as this current instance,
   /// except for any overrides passed in as arguments to [copyWidth].
   VideoPlayerValue copyWith({
@@ -122,6 +126,7 @@ class VideoPlayerValue {
     bool isPlaying,
     bool isLooping,
     bool isBuffering,
+    bool isAdPlaying,
     double volume,
     double playbackSpeed,
     String errorDescription,
@@ -138,6 +143,7 @@ class VideoPlayerValue {
       volume: volume ?? this.volume,
       playbackSpeed: playbackSpeed ?? this.playbackSpeed,
       errorDescription: errorDescription ?? this.errorDescription,
+      isAdPlaying: isAdPlaying ?? this.isAdPlaying,
     );
   }
 
@@ -152,6 +158,7 @@ class VideoPlayerValue {
         'isPlaying: $isPlaying, '
         'isLooping: $isLooping, '
         'isBuffering: $isBuffering, '
+        'isAdPlaying: $isAdPlaying, '
         'volume: $volume, '
         'playbackSpeed: $playbackSpeed, '
         'errorDescription: $errorDescription)';
@@ -315,6 +322,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           break;
         case VideoEventType.bufferingEnd:
           value = value.copyWith(isBuffering: false);
+          break;
+        case VideoEventType.advertisementStart:
+          value = value.copyWith(isAdPlaying: true);
+          break;
+        case VideoEventType.advertisementEnd:
+          value = value.copyWith(isAdPlaying: false);
           break;
         case VideoEventType.unknown:
           break;

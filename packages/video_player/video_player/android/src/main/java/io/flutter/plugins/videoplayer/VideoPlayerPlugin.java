@@ -5,10 +5,10 @@
 package io.flutter.plugins.videoplayer;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 import android.util.LongSparseArray;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import java.security.KeyManagementException;
@@ -33,7 +33,7 @@ import io.flutter.plugins.videoplayer.Messages.VolumeMessage;
 import io.flutter.view.FlutterMain;
 import io.flutter.view.TextureRegistry;
 
-import static io.flutter.plugins.videoplayer.Messages.*;
+import static io.flutter.plugins.videoplayer.Messages.AdvertisementMessage;
 
 /** Android platform implementation of the VideoPlayerPlugin. */
 public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
@@ -41,7 +41,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
   private final LongSparseArray<VideoPlayer> videoPlayers = new LongSparseArray<>();
   private FlutterState flutterState;
   private final VideoPlayerOptions options = new VideoPlayerOptions();
-  private  FrameLayout layout;
+  private ViewGroup container;
 
   /** Register this with the v2 embedding for the plugin to respond to lifecycle callbacks. */
   public VideoPlayerPlugin() {}
@@ -96,10 +96,11 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
                 FlutterMain::getLookupKeyForAsset,
                 binding.getFlutterEngine().getRenderer());
 
-    layout = new FrameLayout(binding.getApplicationContext());
+    container = new FrameLayout(binding.getApplicationContext());
+
     binding
             .getPlatformViewRegistry()
-            .registerViewFactory("NativeViewFactoryVideo", new NativeViewFactory(layout));
+            .registerViewFactory("NativeViewFactoryVideo", new NativeViewFactory(container));
 
     flutterState.startListening(this, binding.getBinaryMessenger());
   }
@@ -111,7 +112,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
     }
     flutterState.stopListening(binding.getBinaryMessenger());
     flutterState = null;
-    layout = null;
+    container = null;
   }
 
   private void disposeAllPlayers() {
@@ -143,11 +144,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
         new EventChannel(
             flutterState.binaryMessenger, "flutter.io/videoPlayer/videoEvents" + handle.id());
 
-
-    final Uri adTagUri = arg.getAdTag() != null ? Uri.parse(arg.getAdTag()) : null;
-
-    Log.w("SSSS", adTagUri + "");
-
     VideoPlayer player;
     if (arg.getAsset() != null) {
       String assetLookupKey;
@@ -165,7 +161,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
               "asset:///" + assetLookupKey,
               null,
               options,
-              layout);
+              container);
     } else {
       player =
           new VideoPlayer(
@@ -175,7 +171,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
               arg.getUri(),
               arg.getFormatHint(),
               options,
-              layout);
+              container);
     }
     videoPlayers.put(handle.id(), player);
 

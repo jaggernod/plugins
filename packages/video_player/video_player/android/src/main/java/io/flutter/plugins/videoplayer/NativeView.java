@@ -1,32 +1,26 @@
 package io.flutter.plugins.videoplayer;
 
-import android.content.Context;
-import android.graphics.Color;
 import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.TextView;
-
-import java.util.Map;
+import android.view.ViewGroup;
 
 import io.flutter.plugin.platform.PlatformView;
 
 class NativeView implements PlatformView {
 
-
-    final FrameLayout layout;
+    ViewGroup container;
 
     @Override
     public View getView() {
-        return layout;
+        return container;
     }
 
     @Override
     public void dispose() {
+        container = null;
     }
 
-
-    NativeView(Context context, int id, Map<String, Object> creationParams, FrameLayout layout) {
-        this.layout = layout;
+    NativeView(ViewGroup container) {
+        this.container = container;
     }
 }
 
