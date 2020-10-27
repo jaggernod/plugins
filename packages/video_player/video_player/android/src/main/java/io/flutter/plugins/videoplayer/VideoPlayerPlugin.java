@@ -8,11 +8,19 @@ import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 import android.util.LongSparseArray;
-import io.flutter.embedding.engine.loader.FlutterLoader;
 import android.widget.FrameLayout;
+
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import androidx.annotation.NonNull;
+import io.flutter.embedding.engine.loader.FlutterLoader;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
+import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugins.videoplayer.Messages.CreateMessage;
 import io.flutter.plugins.videoplayer.Messages.LoopingMessage;
 import io.flutter.plugins.videoplayer.Messages.MixWithOthersMessage;
@@ -21,37 +29,36 @@ import io.flutter.plugins.videoplayer.Messages.PositionMessage;
 import io.flutter.plugins.videoplayer.Messages.TextureMessage;
 import io.flutter.plugins.videoplayer.Messages.VideoPlayerApi;
 import io.flutter.plugins.videoplayer.Messages.VolumeMessage;
+import io.flutter.view.FlutterMain;
 import io.flutter.view.TextureRegistry;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import javax.net.ssl.HttpsURLConnection;
 
 /** Android platform implementation of the VideoPlayerPlugin. */
 public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
   private static final String TAG = "VideoPlayerPlugin";
   private final LongSparseArray<VideoPlayer> videoPlayers = new LongSparseArray<>();
   private FlutterState flutterState;
-  private VideoPlayerOptions options = new VideoPlayerOptions();
+  private final VideoPlayerOptions options = new VideoPlayerOptions();
   private  FrameLayout layout;
 
   /** Register this with the v2 embedding for the plugin to respond to lifecycle callbacks. */
   public VideoPlayerPlugin() {}
 
   @SuppressWarnings("deprecation")
-  private VideoPlayerPlugin(io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
-    this.flutterState =
+  private VideoPlayerPlugin(PluginRegistry.Registrar registrar) {
+    flutterState =
         new FlutterState(
             registrar.context(),
             registrar.messenger(),
             registrar::lookupKeyForAsset,
             registrar::lookupKeyForAsset,
             registrar.textures());
+    //noinspection ThisEscapedInObjectConstruction
     flutterState.startListening(this, registrar.messenger());
   }
 
   /** Registers this with the stable v1 embedding. Will not respond to lifecycle events. */
   @SuppressWarnings("deprecation")
-  public static void registerWith(io.flutter.plugin.common.PluginRegistry.Registrar registrar) {
+  public static void registerWith(PluginRegistry.Registrar registrar) {
     final VideoPlayerPlugin plugin = new VideoPlayerPlugin(registrar);
     registrar.addViewDestroyListener(
         view -> {
@@ -61,8 +68,8 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
   }
 
   @Override
-  public void onAttachedToEngine(FlutterPluginBinding binding) {
-    if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+  public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       try {
         HttpsURLConnection.setDefaultSSLSocketFactory(new CustomSSLSocketFactory());
       } catch (KeyManagementException | NoSuchAlgorithmException e) {
@@ -77,13 +84,14 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
 
     @SuppressWarnings("deprecation")
     final FlutterLoader flutterLoader = FlutterLoader.getInstance();
-    this.flutterState =
+    //noinspection deprecation
+    flutterState =
         new FlutterState(
-            binding.getApplicationContext(),
-            binding.getBinaryMessenger(),
-            FlutterMain::getLookupKeyForAsset,
-            FlutterMain::getLookupKeyForAsset,
-            binding.getFlutterEngine().getRenderer());
+                binding.getApplicationContext(),
+                binding.getBinaryMessenger(),
+                FlutterMain::getLookupKeyForAsset,
+                FlutterMain::getLookupKeyForAsset,
+                binding.getFlutterEngine().getRenderer());
 
     layout = new FrameLayout(binding.getApplicationContext());
     binding
@@ -94,7 +102,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
   }
 
   @Override
-  public void onDetachedFromEngine(FlutterPluginBinding binding) {
+  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
     if (flutterState == null) {
       Log.wtf(TAG, "Detached from the engine before registering to it.");
     }
@@ -119,10 +127,12 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
     disposeAllPlayers();
   }
 
+  @Override
   public void initialize() {
     disposeAllPlayers();
   }
 
+  @Override
   public TextureMessage create(CreateMessage arg) {
     TextureRegistry.SurfaceTextureEntry handle =
         flutterState.textureRegistry.createSurfaceTexture();
@@ -148,7 +158,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
               null,
               options,
               layout);
-      videoPlayers.put(handle.id(), player);
     } else {
       player =
           new VideoPlayer(
@@ -159,40 +168,46 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
               arg.getFormatHint(),
               options,
               layout);
-      videoPlayers.put(handle.id(), player);
     }
+    videoPlayers.put(handle.id(), player);
 
     TextureMessage result = new TextureMessage();
     result.setTextureId(handle.id());
     return result;
   }
 
+  @Override
   public void dispose(TextureMessage arg) {
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.dispose();
     videoPlayers.remove(arg.getTextureId());
   }
 
+  @Override
   public void setLooping(LoopingMessage arg) {
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.setLooping(arg.getIsLooping());
   }
 
+  @Override
   public void setVolume(VolumeMessage arg) {
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.setVolume(arg.getVolume());
   }
 
+  @Override
   public void setPlaybackSpeed(PlaybackSpeedMessage arg) {
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.setPlaybackSpeed(arg.getSpeed());
   }
 
+  @Override
   public void play(TextureMessage arg) {
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.play();
   }
 
+  @Override
   public PositionMessage position(TextureMessage arg) {
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     PositionMessage result = new PositionMessage();
@@ -201,11 +216,13 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
     return result;
   }
 
+  @Override
   public void seekTo(PositionMessage arg) {
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.seekTo(arg.getPosition().intValue());
   }
 
+  @Override
   public void pause(TextureMessage arg) {
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.pause();
@@ -238,7 +255,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
         KeyForAssetAndPackageName keyForAssetAndPackageName,
         TextureRegistry textureRegistry) {
       this.applicationContext = applicationContext;
-      this.binaryMessenger = messenger;
+      binaryMessenger = messenger;
       this.keyForAsset = keyForAsset;
       this.keyForAssetAndPackageName = keyForAssetAndPackageName;
       this.textureRegistry = textureRegistry;
