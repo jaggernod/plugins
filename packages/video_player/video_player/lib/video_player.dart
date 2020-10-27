@@ -279,6 +279,10 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           .setMixWithOthers(videoPlayerOptions.mixWithOthers);
     }
 
+    if (videoPlayerOptions?.adTag != null) {
+      await _videoPlayerPlatform.setAdvertisement(videoPlayerOptions.adTag);
+    }
+
     _textureId = await _videoPlayerPlatform.create(dataSourceDescription);
     _creatingCompleter.complete(null);
     final Completer<void> initializingCompleter = Completer<void>();

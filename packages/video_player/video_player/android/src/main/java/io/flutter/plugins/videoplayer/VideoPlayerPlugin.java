@@ -5,6 +5,7 @@
 package io.flutter.plugins.videoplayer;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 import android.util.LongSparseArray;
@@ -31,6 +32,8 @@ import io.flutter.plugins.videoplayer.Messages.VideoPlayerApi;
 import io.flutter.plugins.videoplayer.Messages.VolumeMessage;
 import io.flutter.view.FlutterMain;
 import io.flutter.view.TextureRegistry;
+
+import static io.flutter.plugins.videoplayer.Messages.*;
 
 /** Android platform implementation of the VideoPlayerPlugin. */
 public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
@@ -140,6 +143,11 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
         new EventChannel(
             flutterState.binaryMessenger, "flutter.io/videoPlayer/videoEvents" + handle.id());
 
+
+    final Uri adTagUri = arg.getAdTag() != null ? Uri.parse(arg.getAdTag()) : null;
+
+    Log.w("SSSS", adTagUri + "");
+
     VideoPlayer player;
     if (arg.getAsset() != null) {
       String assetLookupKey;
@@ -231,6 +239,11 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
   @Override
   public void setMixWithOthers(MixWithOthersMessage arg) {
     options.mixWithOthers = arg.getMixWithOthers();
+  }
+
+  @Override
+  public void setAdvertisement(AdvertisementMessage arg) {
+    options.adTag = arg.getAdTag();
   }
 
   private interface KeyForAssetFn {

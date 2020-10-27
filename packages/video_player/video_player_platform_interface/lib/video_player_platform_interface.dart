@@ -120,6 +120,11 @@ abstract class VideoPlayerPlatform {
     throw UnimplementedError('setMixWithOthers() has not been implemented.');
   }
 
+  /// Sets the Advertisement tag for IMA
+  Future<void> setAdvertisement(String adTag) {
+    throw UnimplementedError('setAdvertisement() has not been implemented.');
+  }
+
   // This method makes sure that VideoPlayer isn't implemented with `implements`.
   //
   // See class doc for more details on why implementing this class is forbidden.
@@ -348,6 +353,11 @@ class VideoPlayerOptions {
   /// The default value is false
   final bool mixWithOthers;
 
+  final String adTag;
+
   /// set additional optional player settings
-  VideoPlayerOptions({this.mixWithOthers = false});
+  VideoPlayerOptions({
+    this.mixWithOthers = false,
+    this.adTag,
+  });
 }

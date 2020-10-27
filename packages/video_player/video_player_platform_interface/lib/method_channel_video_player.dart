@@ -141,6 +141,13 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
     );
   }
 
+  @override
+  Future<void> setAdvertisement(String adTag) {
+    return _api.setAdvertisement(
+      AdvertisementMessage()..adTag = adTag,
+    );
+  }
+
   EventChannel _eventChannelFor(int textureId) {
     return EventChannel('flutter.io/videoPlayer/videoEvents$textureId');
   }

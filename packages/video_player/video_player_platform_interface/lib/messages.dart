@@ -167,6 +167,26 @@ class MixWithOthersMessage {
   }
 }
 
+class AdvertisementMessage {
+  String adTag;
+  // ignore: unused_element
+  Map<dynamic, dynamic> _toMap() {
+    final Map<dynamic, dynamic> pigeonMap = <dynamic, dynamic>{};
+    pigeonMap['adTag'] = adTag;
+    return pigeonMap;
+  }
+
+  // ignore: unused_element
+  static AdvertisementMessage _fromMap(Map<dynamic, dynamic> pigeonMap) {
+    if (pigeonMap == null) {
+      return null;
+    }
+    final AdvertisementMessage result = AdvertisementMessage();
+    result.adTag = pigeonMap['adTag'];
+    return result;
+  }
+}
+
 class VideoPlayerApi {
   Future<void> initialize() async {
     const BasicMessageChannel<dynamic> channel = BasicMessageChannel<dynamic>(
@@ -410,6 +430,29 @@ class VideoPlayerApi {
       // noop
     }
   }
+
+  Future<void> setAdvertisement(AdvertisementMessage arg) async {
+    final Map<dynamic, dynamic> requestMap = arg._toMap();
+    const BasicMessageChannel<dynamic> channel = BasicMessageChannel<dynamic>(
+        'dev.flutter.pigeon.VideoPlayerApi.setAdvertisement',
+        StandardMessageCodec());
+
+    final Map<dynamic, dynamic> replyMap = await channel.send(requestMap);
+    if (replyMap == null) {
+      throw PlatformException(
+          code: 'channel-error',
+          message: 'Unable to establish connection on channel.',
+          details: null);
+    } else if (replyMap['error'] != null) {
+      final Map<dynamic, dynamic> error = replyMap['error'];
+      throw PlatformException(
+          code: error['code'],
+          message: error['message'],
+          details: error['details']);
+    } else {
+      // noop
+    }
+  }
 }
 
 abstract class TestHostVideoPlayerApi {
@@ -424,6 +467,8 @@ abstract class TestHostVideoPlayerApi {
   void seekTo(PositionMessage arg);
   void pause(TextureMessage arg);
   void setMixWithOthers(MixWithOthersMessage arg);
+  void setAdvertisement(AdvertisementMessage arg);
+
   static void setup(TestHostVideoPlayerApi api) {
     {
       const BasicMessageChannel<dynamic> channel = BasicMessageChannel<dynamic>(
@@ -547,6 +592,19 @@ abstract class TestHostVideoPlayerApi {
         final MixWithOthersMessage input =
             MixWithOthersMessage._fromMap(mapMessage);
         api.setMixWithOthers(input);
+        return <dynamic, dynamic>{};
+      });
+    }
+    {
+      const BasicMessageChannel<dynamic> channel = BasicMessageChannel<dynamic>(
+          'dev.flutter.pigeon.VideoPlayerApi.setAdvertisement',
+          StandardMessageCodec());
+      channel.setMockMessageHandler((dynamic message) async {
+        final Map<dynamic, dynamic> mapMessage =
+            message as Map<dynamic, dynamic>;
+        final AdvertisementMessage input =
+            AdvertisementMessage._fromMap(mapMessage);
+        api.setAdvertisement(input);
         return <dynamic, dynamic>{};
       });
     }

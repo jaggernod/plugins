@@ -3,10 +3,11 @@
 
 package io.flutter.plugins.videoplayer;
 
+import java.util.HashMap;
+
 import io.flutter.plugin.common.BasicMessageChannel;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.StandardMessageCodec;
-import java.util.HashMap;
 
 /** Generated class from Pigeon. */
 @SuppressWarnings("unused")
@@ -83,17 +84,29 @@ public class Messages {
       this.formatHint = setterArg;
     }
 
+    private String adTag;
+
+    public String getAdTag() {
+      return adTag;
+    }
+
+    public void setAdTag(String setterArg) {
+      this.adTag = setterArg;
+    }
+
     HashMap toMap() {
       HashMap<String, Object> toMapResult = new HashMap<>();
       toMapResult.put("asset", asset);
       toMapResult.put("uri", uri);
       toMapResult.put("packageName", packageName);
       toMapResult.put("formatHint", formatHint);
+      toMapResult.put("adTag", adTag);
       return toMapResult;
     }
 
     static CreateMessage fromMap(HashMap map) {
       CreateMessage fromMapResult = new CreateMessage();
+
       Object asset = map.get("asset");
       fromMapResult.asset = (String) asset;
       Object uri = map.get("uri");
@@ -102,6 +115,9 @@ public class Messages {
       fromMapResult.packageName = (String) packageName;
       Object formatHint = map.get("formatHint");
       fromMapResult.formatHint = (String) formatHint;
+      Object adTag = map.get("adTag");
+      fromMapResult.adTag = (String) adTag;
+
       return fromMapResult;
     }
   }
@@ -303,6 +319,32 @@ public class Messages {
     }
   }
 
+  public static class AdvertisementMessage {
+    private String adTag;
+
+    public String getAdTag() {
+      return adTag;
+    }
+
+    public void setAdTag(String setterArg) {
+      this.adTag = setterArg;
+    }
+
+    HashMap toMap() {
+      HashMap<String, Object> toMapResult = new HashMap<>();
+      toMapResult.put("adTag", adTag);
+      return toMapResult;
+    }
+
+    static AdvertisementMessage fromMap(HashMap map) {
+      AdvertisementMessage fromMapResult = new AdvertisementMessage();
+      Object adTag = map.get("adTag");
+      fromMapResult.adTag = (String) adTag;
+      return fromMapResult;
+    }
+  }
+
+
   /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
   public interface VideoPlayerApi {
     void initialize();
@@ -326,6 +368,8 @@ public class Messages {
     void pause(TextureMessage arg);
 
     void setMixWithOthers(MixWithOthersMessage arg);
+
+    void setAdvertisement(AdvertisementMessage arg);
 
     /** Sets up an instance of `VideoPlayerApi` to handle messages through the `binaryMessenger` */
     static void setup(BinaryMessenger binaryMessenger, VideoPlayerApi api) {
@@ -581,6 +625,30 @@ public class Messages {
                   @SuppressWarnings("ConstantConditions")
                   MixWithOthersMessage input = MixWithOthersMessage.fromMap((HashMap) message);
                   api.setMixWithOthers(input);
+                  wrapped.put("result", null);
+                } catch (Exception exception) {
+                  wrapped.put("error", wrapError(exception));
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger,
+                "dev.flutter.pigeon.VideoPlayerApi.setAdvertisement",
+                new StandardMessageCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                HashMap<String, HashMap> wrapped = new HashMap<>();
+                try {
+                  @SuppressWarnings("ConstantConditions")
+                  AdvertisementMessage input = AdvertisementMessage.fromMap((HashMap) message);
+                  api.setAdvertisement(input);
                   wrapped.put("result", null);
                 } catch (Exception exception) {
                   wrapped.put("error", wrapError(exception));
