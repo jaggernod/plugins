@@ -1,24 +1,39 @@
 package io.flutter.plugins.videoplayer;
 
 import android.content.Context;
-import android.view.ViewGroup;
 
+import io.flutter.Log;
 import io.flutter.plugin.common.StandardMessageCodec;
 import io.flutter.plugin.platform.PlatformView;
 import io.flutter.plugin.platform.PlatformViewFactory;
 
 class NativeViewFactory extends PlatformViewFactory {
 
-    final ViewGroup viewGroup;
+    final OverlayRegistrant registrant;
 
-    NativeViewFactory(ViewGroup viewGroup) {
+    NativeViewFactory(OverlayRegistrant registrant) {
         super(StandardMessageCodec.INSTANCE);
-        this.viewGroup = viewGroup;
+        this.registrant = registrant;
     }
 
     @Override
     public PlatformView create(Context context, int id, Object args) {
-        return new NativeView(viewGroup);
+        Log.i("SSSS", "Create view " + id);
+
+        android.util.Log.w("SSSSS", "create PlatformView");
+
+        OverlayView overlay = registrant.fetchOverlay(id);
+        if (overlay != null) {
+            Log.i("SSSS", "Overlay exists " + id);
+            return new NativeView(overlay);
+        } else {
+            Log.i("SSSS", "Overlay DOES NTO EXIST " + id);
+            final NativeView nativeView = new NativeView(context);
+
+            registrant.registerOverlay(id, nativeView);
+
+            return nativeView;
+        }
     }
 }
 

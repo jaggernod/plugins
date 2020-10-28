@@ -316,7 +316,10 @@ final class VideoPlayer implements AdEvent.AdEventListener {
     }
 
     if (adsLoader != null) {
+      adsLoader.stop();
       adsLoader.setPlayer(null);
+      adsLoader.release();
+      adsLoader = null;
     }
 
     textureEntry.release();

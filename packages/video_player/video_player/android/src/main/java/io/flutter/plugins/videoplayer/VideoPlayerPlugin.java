@@ -9,7 +9,6 @@ import android.os.Build;
 import android.util.Log;
 import android.util.LongSparseArray;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -35,13 +34,26 @@ import io.flutter.view.TextureRegistry;
 
 import static io.flutter.plugins.videoplayer.Messages.AdvertisementMessage;
 
+
+interface  OverlayView {
+
+  ViewGroup getContainer();
+
+}
+
+interface  OverlayRegistrant {
+  void registerOverlay(long handleId, OverlayView view);
+
+  OverlayView fetchOverlay(long handleId);
+}
+
 /** Android platform implementation of the VideoPlayerPlugin. */
-public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
+public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, VideoPlayerApi {
   private static final String TAG = "VideoPlayerPlugin";
   private final LongSparseArray<VideoPlayer> videoPlayers = new LongSparseArray<>();
+  private final LongSparseArray<OverlayView> overlayViews = new LongSparseArray<>();
   private FlutterState flutterState;
   private final VideoPlayerOptions options = new VideoPlayerOptions();
-  private ViewGroup container;
 
   /** Register this with the v2 embedding for the plugin to respond to lifecycle callbacks. */
   public VideoPlayerPlugin() {}
@@ -96,13 +108,21 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
                 FlutterMain::getLookupKeyForAsset,
                 binding.getFlutterEngine().getRenderer());
 
-    container = new FrameLayout(binding.getApplicationContext());
-
     binding
             .getPlatformViewRegistry()
-            .registerViewFactory("NativeViewFactoryVideo", new NativeViewFactory(container));
+            .registerViewFactory("NativeViewFactoryVideo", new NativeViewFactory(this));
 
     flutterState.startListening(this, binding.getBinaryMessenger());
+  }
+
+  @Override
+  public void registerOverlay(long handleId, OverlayView view) {
+    overlayViews.put(handleId, view);
+  }
+
+  @Override
+  public OverlayView fetchOverlay(long handleId) {
+    return overlayViews.get(handleId);
   }
 
   @Override
@@ -112,7 +132,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
     }
     flutterState.stopListening(binding.getBinaryMessenger());
     flutterState = null;
-    container = null;
   }
 
   private void disposeAllPlayers() {
@@ -138,12 +157,22 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
 
   @Override
   public TextureMessage create(CreateMessage arg) {
+    // We need here to find the overlay view in the activity and attach it to the video player.
     TextureRegistry.SurfaceTextureEntry handle =
         flutterState.textureRegistry.createSurfaceTexture();
+
+    Log.w("SSSSS", "create texture" + handle.id());
     EventChannel eventChannel =
         new EventChannel(
             flutterState.binaryMessenger, "flutter.io/videoPlayer/videoEvents" + handle.id());
 
+    OverlayView overlay = overlayViews.get(handle.id());
+
+    if (overlay == null) {
+      overlay = new NativeView(flutterState.applicationContext);
+      registerOverlay(handle.id(), overlay);
+    }
+    
     VideoPlayer player;
     if (arg.getAsset() != null) {
       String assetLookupKey;
@@ -161,7 +190,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
               "asset:///" + assetLookupKey,
               null,
               options,
-              container);
+              overlay.getContainer());
     } else {
       player =
           new VideoPlayer(
@@ -171,20 +200,29 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
               arg.getUri(),
               arg.getFormatHint(),
               options,
-              container);
+              overlay.getContainer());
     }
     videoPlayers.put(handle.id(), player);
 
     TextureMessage result = new TextureMessage();
     result.setTextureId(handle.id());
+
+    Log.w("SSSSS", "Create player with id " + handle.id() + " Still left: " + videoPlayers.size());
+    Log.w("SSSSS", "Left " + videoPlayers);
     return result;
   }
 
   @Override
   public void dispose(TextureMessage arg) {
+    Log.w("SSSSS", "dispose " + arg.getTextureId());
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.dispose();
     videoPlayers.remove(arg.getTextureId());
+
+    overlayViews.remove(arg.getTextureId());
+
+    Log.w("SSSSS", "Remove player with id " + arg.getTextureId() + " Still left: " + videoPlayers.size());
+    Log.w("SSSSS", "Left " + videoPlayers);
   }
 
   @Override
@@ -278,4 +316,8 @@ public class VideoPlayerPlugin implements FlutterPlugin, VideoPlayerApi {
       VideoPlayerApi.setup(messenger, null);
     }
   }
+
+
 }
+
+

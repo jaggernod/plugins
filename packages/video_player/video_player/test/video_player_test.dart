@@ -728,6 +728,11 @@ class FakeVideoPlayerPlatform extends TestHostVideoPlayerApi {
   void setMixWithOthers(MixWithOthersMessage arg) {
     calls.add('setMixWithOthers');
   }
+
+  @override
+  void setAdvertisement(AdvertisementMessage arg) {
+    calls.add('setAdvertisement');
+  }
 }
 
 class FakeVideoEventStream {
