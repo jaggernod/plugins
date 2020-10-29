@@ -6,7 +6,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
@@ -246,9 +248,6 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   StreamSubscription<dynamic> _eventSubscription;
   _VideoAppLifeCycleObserver _lifeCycleObserver;
 
-  /// This is just exposed for testing. It shouldn't be used by anyone depending
-  /// on the plugin.
-  @visibleForTesting
   int get textureId => _textureId;
 
   /// Attempts to open the given [dataSource] and load metadata about the video.
@@ -358,6 +357,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   @override
   Future<void> dispose() async {
+    print("SSSSSSSSSSSSSSS dispose");
+
     if (_creatingCompleter != null) {
       await _creatingCompleter.future;
       if (!_isDisposed) {
@@ -370,6 +371,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
     _isDisposed = true;
     super.dispose();
+
+    print("SSSSSSSSSSSSSSS dispose end");
   }
 
   /// Starts playing the video.
@@ -935,5 +938,112 @@ class ClosedCaption extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class AdOverlay extends StatefulWidget {
+  const AdOverlay({
+    Key key,
+    @required this.controller,
+  })  : assert(controller != null),
+        super(key: key);
+
+  final VideoPlayerController controller;
+
+  @override
+  _AdOverlayState createState() => _AdOverlayState();
+}
+
+class _AdOverlayState extends State<AdOverlay>
+    with SingleTickerProviderStateMixin {
+  bool _isAdPlaying;
+  VoidCallback _listener;
+  AnimationController _controller;
+
+  int get textureId => widget.controller.textureId;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _listener = () {
+      if (widget.controller.value.isAdPlaying != _isAdPlaying) {
+        setState(() {});
+        _isAdPlaying = widget.controller.value.isAdPlaying;
+        if (_isAdPlaying) {
+          _controller.repeat();
+        } else {
+          _controller.stop();
+        }
+      }
+    };
+
+    widget.controller.addListener(_listener);
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 1),
+    );
+
+    _isAdPlaying = widget.controller.value.isAdPlaying;
+    if (_isAdPlaying) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(AdOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_listener);
+      widget.controller.addListener(_listener);
+
+      _isAdPlaying = widget.controller.value.isAdPlaying;
+      if (_isAdPlaying) {
+        _controller.repeat();
+      } else {
+        _controller.stop();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const viewType = 'NativeViewFactoryVideo';
+    return _isAdPlaying && textureId != null
+        ? PlatformViewLink(
+            viewType: viewType,
+            surfaceFactory: (
+              BuildContext context,
+              PlatformViewController controller,
+            ) {
+              return AndroidViewSurface(
+                controller: controller,
+                gestureRecognizers: const <
+                    Factory<OneSequenceGestureRecognizer>>{},
+                hitTestBehavior: PlatformViewHitTestBehavior.translucent,
+              );
+            },
+            onCreatePlatformView: (PlatformViewCreationParams params) {
+              return PlatformViewsService.initSurfaceAndroidView(
+                id: widget.controller.textureId,
+                viewType: viewType,
+                layoutDirection: TextDirection.ltr,
+                creationParams: <String, dynamic>{},
+                creationParamsCodec: const StandardMessageCodec(),
+              )
+                ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
+                ..create();
+            },
+          )
+        : const SizedBox();
   }
 }

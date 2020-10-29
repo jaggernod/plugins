@@ -7,8 +7,9 @@
 /// An example of using the plugin, controlling lifecycle and playback of the
 /// video.
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:video_player/video_player.dart';
 
 void main() {
@@ -190,6 +191,7 @@ class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
                   VideoPlayer(_controller),
                   _ControlsOverlay(controller: _controller),
                   VideoProgressIndicator(_controller, allowScrubbing: true),
+                  AdOverlay(controller: _controller),
                 ],
               ),
             ),
@@ -220,14 +222,18 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     _controller = VideoPlayerController.network(
       'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
       closedCaptionFile: _loadCaptions(),
-      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      videoPlayerOptions: VideoPlayerOptions(
+        mixWithOthers: true,
+        adTag:
+            'https://pubads.g.doubleclick.net/gampad/ads?iu=/21675937462/video_app_live&description_url=http%3A%2F%2Fwww.upday.com%2F&tfcd=0&npa=0&sz=640x480%7C400x300&min_ad_duration=0000&max_ad_duration=300000&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=',
+      ),
     );
 
     _controller.addListener(() {
-      setState(() {});
+      // setState(() {});
     });
-    _controller.setLooping(true);
-    _controller.initialize();
+    _controller.setLooping(false);
+    _controller.initialize().then((value) => _controller.play());
   }
 
   @override
@@ -244,17 +250,21 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
           Container(padding: const EdgeInsets.only(top: 20.0)),
           const Text('With remote mp4'),
           Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller),
-                  ClosedCaption(text: _controller.value.caption.text),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(_controller, allowScrubbing: true),
-                ],
+            padding: const EdgeInsets.all(24),
+            child: ClipRRect(
+              borderRadius: BorderRadius.all(Radius.circular(24)),
+              child: AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: <Widget>[
+                    VideoPlayer(_controller),
+                    ClosedCaption(text: _controller.value.caption.text),
+                    // _ControlsOverlay(controller: _controller),
+                    VideoProgressIndicator(_controller, allowScrubbing: true),
+                    AdOverlay(controller: _controller),
+                  ],
+                ),
               ),
             ),
           ),
