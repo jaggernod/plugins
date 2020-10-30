@@ -90,7 +90,6 @@ final class VideoPlayer implements AdEvent.AdEventListener {
             .setTrackSelector(trackSelector)
             .build();
 
-    adsLoader.setPlayer(exoPlayer);
     Uri uri = Uri.parse(dataSource);
 
     DataSource.Factory dataSourceFactory;
