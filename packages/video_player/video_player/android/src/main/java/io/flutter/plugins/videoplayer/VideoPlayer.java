@@ -4,6 +4,7 @@ import com.google.ads.interactivemedia.v3.api.AdEvent;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Player.EventListener;
@@ -48,6 +49,7 @@ import io.flutter.view.TextureRegistry;
 import static com.google.android.exoplayer2.Player.REPEAT_MODE_ALL;
 import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
 
+
 final class VideoPlayer implements AdEvent.AdEventListener {
   private static final String FORMAT_SS = "ss";
   private static final String FORMAT_DASH = "dash";
@@ -88,6 +90,7 @@ final class VideoPlayer implements AdEvent.AdEventListener {
             .setTrackSelector(trackSelector)
             .build();
 
+    adsLoader.setPlayer(exoPlayer);
     Uri uri = Uri.parse(dataSource);
 
     DataSource.Factory dataSourceFactory;
@@ -175,17 +178,18 @@ final class VideoPlayer implements AdEvent.AdEventListener {
         return new SsMediaSource.Factory(
                 new DefaultSsChunkSource.Factory(mediaDataSourceFactory),
                 new DefaultDataSourceFactory(context, null, mediaDataSourceFactory))
-            .createMediaSource(uri);
+            .createMediaSource(MediaItem.fromUri(uri));
       case C.TYPE_DASH:
         return new DashMediaSource.Factory(
                 new DefaultDashChunkSource.Factory(mediaDataSourceFactory),
                 new DefaultDataSourceFactory(context, null, mediaDataSourceFactory))
-            .createMediaSource(uri);
+            .createMediaSource(MediaItem.fromUri(uri));
       case C.TYPE_HLS:
-        return new HlsMediaSource.Factory(mediaDataSourceFactory).createMediaSource(uri);
+        return new HlsMediaSource.Factory(mediaDataSourceFactory)
+            .createMediaSource(MediaItem.fromUri(uri));
       case C.TYPE_OTHER:
         return new ProgressiveMediaSource.Factory(mediaDataSourceFactory)
-            .createMediaSource(uri);
+            .createMediaSource(MediaItem.fromUri(uri));
       default:
         {
           throw new IllegalStateException("Unsupported type: " + type);
@@ -217,7 +221,7 @@ final class VideoPlayer implements AdEvent.AdEventListener {
         new EventListener() {
 
           @Override
-          public void onPlayerStateChanged(final boolean playWhenReady, final int playbackState) {
+          public void onPlaybackStateChanged(final int playbackState) {
             if (playbackState == Player.STATE_BUFFERING) {
               sendBufferingUpdate();
             } else if (playbackState == Player.STATE_READY) {
@@ -358,7 +362,6 @@ final class VideoPlayer implements AdEvent.AdEventListener {
      eventSink.success(event);
    }
   }
-
 }
 
 class FakeOverlay implements AdsLoader.AdViewProvider {

@@ -17,6 +17,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.engine.loader.FlutterLoader;
+import io.flutter.FlutterInjector;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -213,7 +214,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
     videoPlayers.remove(arg.getTextureId());
     overlayViews.remove(arg.getTextureId());
   }
-
 
   @Override
   public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
