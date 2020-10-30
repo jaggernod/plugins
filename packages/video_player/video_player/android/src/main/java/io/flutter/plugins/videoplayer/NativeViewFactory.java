@@ -18,9 +18,7 @@ class NativeViewFactory extends PlatformViewFactory {
 
     @Override
     public PlatformView create(Context context, int id, Object args) {
-        Log.i("SSSS", "Create view " + id);
-
-        android.util.Log.w("SSSSS", "create PlatformView");
+        Log.i("SSSS", "Create PlatformView  " + id);
 
         OverlayView overlay = registrant.fetchOverlay(id);
         if (overlay != null) {

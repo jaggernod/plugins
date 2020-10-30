@@ -18,6 +18,8 @@ import javax.net.ssl.HttpsURLConnection;
 import androidx.annotation.NonNull;
 import io.flutter.embedding.engine.loader.FlutterLoader;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.PluginRegistry;
@@ -48,7 +50,7 @@ interface  OverlayRegistrant {
 }
 
 /** Android platform implementation of the VideoPlayerPlugin. */
-public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, VideoPlayerApi {
+public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, ActivityAware, VideoPlayerApi {
   private static final String TAG = "VideoPlayerPlugin";
   private final LongSparseArray<VideoPlayer> videoPlayers = new LongSparseArray<>();
   private final LongSparseArray<OverlayView> overlayViews = new LongSparseArray<>();
@@ -141,6 +143,12 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Vide
     videoPlayers.clear();
   }
 
+  private void pauseAllPlayers() {
+    for (int i = 0; i < videoPlayers.size(); i++) {
+      videoPlayers.valueAt(i).pause();
+    }
+  }
+
   private void onDestroy() {
     // The whole FlutterView is being destroyed. Here we release resources acquired for all
     // instances
@@ -223,6 +231,24 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Vide
 
     Log.w("SSSSS", "Remove player with id " + arg.getTextureId() + " Still left: " + videoPlayers.size());
     Log.w("SSSSS", "Left " + videoPlayers);
+  }
+
+
+  @Override
+  public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
+  }
+
+  @Override
+  public void onDetachedFromActivityForConfigChanges() {
+  }
+
+  @Override
+  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+  }
+
+  @Override
+  public void onDetachedFromActivity() {
+    pauseAllPlayers();
   }
 
   @Override
