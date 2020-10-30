@@ -144,9 +144,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
   }
 
   private void pauseAllPlayers() {
-    for (int i = 0; i < videoPlayers.size(); i++) {
-      videoPlayers.valueAt(i).pause();
-    }
+    disposeAllPlayers();
   }
 
   private void onDestroy() {
