@@ -143,10 +143,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
     videoPlayers.clear();
   }
 
-  private void pauseAllPlayers() {
-    disposeAllPlayers();
-  }
-
   private void onDestroy() {
     // The whole FlutterView is being destroyed. Here we release resources acquired for all
     // instances
@@ -172,13 +168,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
         new EventChannel(
             flutterState.binaryMessenger, "flutter.io/videoPlayer/videoEvents" + handle.id());
 
-    OverlayView overlay = overlayViews.get(handle.id());
-
-    if (overlay == null) {
-      overlay = new NativeView(flutterState.applicationContext);
-      registerOverlay(handle.id(), overlay);
-    }
-    
     VideoPlayer player;
     if (arg.getAsset() != null) {
       String assetLookupKey;
@@ -196,7 +185,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
               "asset:///" + assetLookupKey,
               null,
               options,
-              overlay.getContainer());
+              this);
     } else {
       player =
           new VideoPlayer(
@@ -206,15 +195,13 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
               arg.getUri(),
               arg.getFormatHint(),
               options,
-              overlay.getContainer());
+              this);
     }
     videoPlayers.put(handle.id(), player);
 
     TextureMessage result = new TextureMessage();
     result.setTextureId(handle.id());
 
-    Log.w("SSSSS", "Create player with id " + handle.id() + " Still left: " + videoPlayers.size());
-    Log.w("SSSSS", "Left " + videoPlayers);
     return result;
   }
 
@@ -224,11 +211,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.dispose();
     videoPlayers.remove(arg.getTextureId());
-
     overlayViews.remove(arg.getTextureId());
-
-    Log.w("SSSSS", "Remove player with id " + arg.getTextureId() + " Still left: " + videoPlayers.size());
-    Log.w("SSSSS", "Left " + videoPlayers);
   }
 
 
@@ -246,7 +229,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
 
   @Override
   public void onDetachedFromActivity() {
-    pauseAllPlayers();
+    disposeAllPlayers();
   }
 
   @Override
@@ -340,7 +323,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
       VideoPlayerApi.setup(messenger, null);
     }
   }
-
 
 }
 
