@@ -77,7 +77,7 @@ final class VideoPlayer implements AdEvent.AdEventListener {
       String dataSource,
       String formatHint,
       VideoPlayerOptions options,
-      ViewGroup container) {
+      OverlayRegistrant overlayRegistrant) {
     this.eventChannel = eventChannel;
     this.textureEntry = textureEntry;
     this.options = options;
@@ -106,6 +106,13 @@ final class VideoPlayer implements AdEvent.AdEventListener {
     final MediaSource mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint, context);
 
     if (options.adTag != null) {
+      OverlayView overlay = overlayRegistrant.fetchOverlay(textureEntry.id());
+
+      if (overlay == null) {
+        overlay = new NativeView(context);
+        overlayRegistrant.registerOverlay(textureEntry.id(), overlay);
+      }
+
       adsLoader = new ImaAdsLoader.Builder(context)
               .setAdEventListener(this)
               .build();
@@ -118,7 +125,7 @@ final class VideoPlayer implements AdEvent.AdEventListener {
                       new DataSpec(Uri.parse(options.adTag)),
                       new ProgressiveMediaSource.Factory(dataSourceFactory),
                       adsLoader,
-                      new FakeOverlay(container)
+                      new FakeOverlay(overlay.getContainer())
               );
 
       exoPlayer.setMediaSource(adsMediaSource);
