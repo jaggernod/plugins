@@ -20,6 +20,7 @@ class _ApiLogger implements TestHostVideoPlayerApi {
   VolumeMessage volumeMessage;
   PlaybackSpeedMessage playbackSpeedMessage;
   MixWithOthersMessage mixWithOthersMessage;
+  AdvertisementMessage advertisementMessage;
 
   @override
   TextureMessage create(CreateMessage arg) {
@@ -86,6 +87,12 @@ class _ApiLogger implements TestHostVideoPlayerApi {
   void setPlaybackSpeed(PlaybackSpeedMessage arg) {
     log.add('setPlaybackSpeed');
     playbackSpeedMessage = arg;
+  }
+
+  @override
+  void setAdvertisement(AdvertisementMessage arg) {
+    log.add('setAdvertisement');
+    advertisementMessage = arg;
   }
 }
 
@@ -230,6 +237,13 @@ void main() {
       expect(position, const Duration(milliseconds: 234));
     });
 
+    test('setAdvertisement', () async {
+      await player.setAdvertisement('advertisement tag');
+      expect(log.log.last, 'setAdvertisement');
+      // TODO We should have dedicated texture id for the Ad
+      expect(log.advertisementMessage.adTag, 'advertisement tag');
+    });
+
     test('videoEventsFor', () async {
       // TODO(cbenhagen): This has been deprecated and should be replaced
       // with `ServicesBinding.instance.defaultBinaryMessenger` when it's
@@ -308,6 +322,43 @@ void main() {
                 }),
                 (ByteData data) {});
 
+            // TODO(cbenhagen): This has been deprecated and should be replaced
+            // with `ServicesBinding.instance.defaultBinaryMessenger` when it's
+            // available on all the versions of Flutter that we test.
+            // ignore: deprecated_member_use
+            await defaultBinaryMessenger.handlePlatformMessage(
+                "flutter.io/videoPlayer/videoEvents123",
+                const StandardMethodCodec()
+                    .encodeSuccessEnvelope(<String, dynamic>{
+                  'event': 'advertisementStart',
+                }),
+                (ByteData data) {});
+
+            // TODO(cbenhagen): This has been deprecated and should be replaced
+            // with `ServicesBinding.instance.defaultBinaryMessenger` when it's
+            // available on all the versions of Flutter that we test.
+            // ignore: deprecated_member_use
+            await defaultBinaryMessenger.handlePlatformMessage(
+                "flutter.io/videoPlayer/videoEvents123",
+                const StandardMethodCodec()
+                    .encodeSuccessEnvelope(<String, dynamic>{
+                  'event': 'advertisementEnd',
+                }),
+                (ByteData data) {});
+
+            // TODO(cbenhagen): This has been deprecated and should be replaced
+            // with `ServicesBinding.instance.defaultBinaryMessenger` when it's
+            // available on all the versions of Flutter that we test.
+            // ignore: deprecated_member_use
+            await defaultBinaryMessenger.handlePlatformMessage(
+                "flutter.io/videoPlayer/videoEvents123",
+                const StandardMethodCodec()
+                    .encodeSuccessEnvelope(<String, dynamic>{
+                  'event': 'durationUpdate',
+                  'duration': 208765,
+                }),
+                (ByteData data) {});
+
             return const StandardMethodCodec().encodeSuccessEnvelope(null);
           } else if (methodCall.method == 'cancel') {
             return const StandardMethodCodec().encodeSuccessEnvelope(null);
@@ -339,6 +390,12 @@ void main() {
                 ]),
             VideoEvent(eventType: VideoEventType.bufferingStart),
             VideoEvent(eventType: VideoEventType.bufferingEnd),
+            VideoEvent(eventType: VideoEventType.advertisementStart),
+            VideoEvent(eventType: VideoEventType.advertisementEnd),
+            VideoEvent(
+              eventType: VideoEventType.durationUpdate,
+              duration: const Duration(milliseconds: 208765),
+            ),
           ]));
     });
   });

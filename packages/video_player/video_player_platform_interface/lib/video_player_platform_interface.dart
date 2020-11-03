@@ -280,6 +280,9 @@ enum VideoEventType {
   /// The playback has ended.
   completed,
 
+  /// Updated information on the duration.
+  durationUpdate,
+
   /// Updated information on the buffering state.
   bufferingUpdate,
 

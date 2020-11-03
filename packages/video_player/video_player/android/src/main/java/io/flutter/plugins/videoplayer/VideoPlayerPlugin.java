@@ -17,7 +17,6 @@ import javax.net.ssl.HttpsURLConnection;
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.engine.loader.FlutterLoader;
-import io.flutter.FlutterInjector;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -164,7 +163,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
     TextureRegistry.SurfaceTextureEntry handle =
         flutterState.textureRegistry.createSurfaceTexture();
 
-    Log.w("SSSSS", "create texture" + handle.id());
     EventChannel eventChannel =
         new EventChannel(
             flutterState.binaryMessenger, "flutter.io/videoPlayer/videoEvents" + handle.id());
@@ -208,7 +206,6 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
 
   @Override
   public void dispose(TextureMessage arg) {
-    Log.w("SSSSS", "dispose " + arg.getTextureId());
     VideoPlayer player = videoPlayers.get(arg.getTextureId());
     player.dispose();
     videoPlayers.remove(arg.getTextureId());
