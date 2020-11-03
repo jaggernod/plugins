@@ -9,6 +9,7 @@ import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Player.EventListener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.ext.ima.ImaAdsLoader;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -48,6 +49,7 @@ import io.flutter.view.TextureRegistry;
 
 import static com.google.android.exoplayer2.Player.REPEAT_MODE_ALL;
 import static com.google.android.exoplayer2.Player.REPEAT_MODE_OFF;
+import static com.google.android.exoplayer2.Player.TIMELINE_CHANGE_REASON_SOURCE_UPDATE;
 
 
 final class VideoPlayer implements AdEvent.AdEventListener {
@@ -236,6 +238,13 @@ final class VideoPlayer implements AdEvent.AdEventListener {
           }
 
           @Override
+          public void onTimelineChanged(Timeline timeline, int reason) {
+            if (reason == TIMELINE_CHANGE_REASON_SOURCE_UPDATE) {
+              sendDurationUpdate();
+            }
+          }
+
+          @Override
           public void onPlayerError(final ExoPlaybackException error) {
             if (eventSink != null) {
               eventSink.error("VideoError", "Video player had error " + error, null);
@@ -320,6 +329,16 @@ final class VideoPlayer implements AdEvent.AdEventListener {
     }
   }
 
+  private void sendDurationUpdate() {
+    if (isInitialized) {
+      Map<String, Object> event = new HashMap<>();
+      event.put("event", "durationUpdate");
+      event.put("duration", exoPlayer.getDuration());
+
+      eventSink.success(event);
+    }
+  }
+
   void dispose() {
     if (isInitialized) {
       exoPlayer.stop();
@@ -346,20 +365,23 @@ final class VideoPlayer implements AdEvent.AdEventListener {
   public void onAdEvent(AdEvent adEvent) {
     Log.i("Ad Event", "Type: " + adEvent.getType());
 
-    sendAdvertisementUpdate(adEvent);
+    switch (adEvent.getType()) {
+        case CONTENT_PAUSE_REQUESTED:
+            sendAdvertisementUpdate(true);
+            break;
+        case CONTENT_RESUME_REQUESTED:
+            sendAdvertisementUpdate(false);
+            break;
+        default:
+            break;
+    }
   }
 
-  void sendAdvertisementUpdate(AdEvent adEvent) {
-    final AdEvent.AdEventType type = adEvent.getType();
+  void sendAdvertisementUpdate(boolean isPlaying) {
     Map<String, Object> event = new HashMap<>();
 
-   if (type == AdEvent.AdEventType.CONTENT_PAUSE_REQUESTED) {
-     event.put("event", "advertisementStart");
-     eventSink.success(event);
-   } else if (type == AdEvent.AdEventType.CONTENT_RESUME_REQUESTED) {
-     event.put("event", "advertisementEnd");
-     eventSink.success(event);
-   }
+    event.put("event", isPlaying ? "advertisementStart" : "advertisementEnd");
+    eventSink.success(event);
   }
 }
 
