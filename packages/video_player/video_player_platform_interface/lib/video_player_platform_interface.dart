@@ -246,7 +246,7 @@ class VideoEvent {
   /// Only used if [eventType] is [VideoEventType.bufferingUpdate].
   final List<DurationRange>? buffered;
 
-  final bool advertisementPresent;
+  final bool? advertisementPresent;
 
   @override
   bool operator ==(Object other) {
@@ -368,7 +368,7 @@ class VideoPlayerOptions {
   /// currently no way to implement this feature in this platform).
   final bool mixWithOthers;
 
-  final String adTag;
+  final String? adTag;
 
   /// set additional optional player settings
   VideoPlayerOptions({

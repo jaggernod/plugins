@@ -21,6 +21,7 @@ abstract class TestHostVideoPlayerApi {
   void seekTo(PositionMessage arg);
   void pause(TextureMessage arg);
   void setMixWithOthers(MixWithOthersMessage arg);
+  void setAdvertisement(AdvertisementMessage arg);
   static void setup(TestHostVideoPlayerApi? api) {
     {
       const BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
@@ -188,6 +189,23 @@ abstract class TestHostVideoPlayerApi {
           final MixWithOthersMessage input =
               MixWithOthersMessage.decode(message!);
           api.setMixWithOthers(input);
+          return <Object?, Object?>{};
+        });
+      }
+    }
+    {
+      const BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.VideoPlayerApi.setAdvertisement',
+          StandardMessageCodec());
+      if (api == null) {
+        channel.setMockMessageHandler(null);
+      } else {
+        channel.setMockMessageHandler((Object? message) async {
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.VideoPlayerApi.setMixWithOthers was null. Expected AdvertisementMessage.');
+          final AdvertisementMessage input =
+              AdvertisementMessage.decode(message!);
+          api.setAdvertisement(input);
           return <Object?, Object?>{};
         });
       }

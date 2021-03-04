@@ -297,7 +297,7 @@ void main() {
                     .encodeSuccessEnvelope(<String, dynamic>{
                   'event': 'advertisementStart',
                 }),
-                (ByteData data) {});
+                (ByteData? data) {});
 
             // TODO(cbenhagen): This has been deprecated and should be replaced
             // with `ServicesBinding.instance.defaultBinaryMessenger` when it's
@@ -309,7 +309,7 @@ void main() {
                     .encodeSuccessEnvelope(<String, dynamic>{
                   'event': 'advertisementEnd',
                 }),
-                (ByteData data) {});
+                (ByteData? data) {});
 
             // TODO(cbenhagen): This has been deprecated and should be replaced
             // with `ServicesBinding.instance.defaultBinaryMessenger` when it's
@@ -322,7 +322,7 @@ void main() {
                   'event': 'durationUpdate',
                   'duration': 208765,
                 }),
-                (ByteData data) {});
+                (ByteData? data) {});
 
             return const StandardMethodCodec().encodeSuccessEnvelope(null);
           } else if (methodCall.method == 'cancel') {
