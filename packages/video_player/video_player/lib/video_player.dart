@@ -16,11 +16,6 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 import 'src/closed_caption_file.dart';
 export 'src/closed_caption_file.dart';
 
-final VideoPlayerPlatform _videoPlayerPlatform = VideoPlayerPlatform.instance
-  // This will clear all open videos on the platform when a full restart is
-  // performed.
-  ..init();
-
 /// The duration, current position, buffering state, error state and settings
 /// of a [VideoPlayerController].
 class VideoPlayerValue {
@@ -187,9 +182,13 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// The name of the asset is given by the [dataSource] argument and must not be
   /// null. The [package] argument must be non-null when the asset comes from a
   /// package and null otherwise.
-  VideoPlayerController.asset(this.dataSource,
-      {this.package, this.closedCaptionFile, this.videoPlayerOptions})
-      : dataSourceType = DataSourceType.asset,
+  VideoPlayerController.asset(
+    this.dataSource, {
+    required this.videoPlayerPlatform,
+    this.package,
+    this.closedCaptionFile,
+    this.videoPlayerOptions,
+  })  : dataSourceType = DataSourceType.asset,
         formatHint = null,
         super(VideoPlayerValue(duration: Duration.zero));
 
@@ -200,9 +199,13 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// null.
   /// **Android only**: The [formatHint] option allows the caller to override
   /// the video format detection code.
-  VideoPlayerController.network(this.dataSource,
-      {this.formatHint, this.closedCaptionFile, this.videoPlayerOptions})
-      : dataSourceType = DataSourceType.network,
+  VideoPlayerController.network(
+    this.dataSource, {
+    required this.videoPlayerPlatform,
+    this.formatHint,
+    this.closedCaptionFile,
+    this.videoPlayerOptions,
+  })  : dataSourceType = DataSourceType.network,
         package = null,
         super(VideoPlayerValue(duration: Duration.zero));
 
@@ -210,9 +213,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   ///
   /// This will load the file from the file-URI given by:
   /// `'file://${file.path}'`.
-  VideoPlayerController.file(File file,
-      {this.closedCaptionFile, this.videoPlayerOptions})
-      : dataSource = 'file://${file.path}',
+  VideoPlayerController.file(
+    File file, {
+    required this.videoPlayerPlatform,
+    this.closedCaptionFile,
+    this.videoPlayerOptions,
+  })  : dataSource = 'file://${file.path}',
         dataSourceType = DataSourceType.file,
         package = null,
         formatHint = null,
@@ -257,6 +263,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   int get textureId => _textureId;
 
+  final VideoPlayerPlatform videoPlayerPlatform;
+
   /// Attempts to open the given [dataSource] and load metadata about the video.
   Future<void> initialize() async {
     _lifeCycleObserver = _VideoAppLifeCycleObserver(this);
@@ -288,15 +296,15 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
 
     if (videoPlayerOptions?.mixWithOthers != null) {
-      await _videoPlayerPlatform
+      await videoPlayerPlatform
           .setMixWithOthers(videoPlayerOptions!.mixWithOthers);
     }
 
     if (videoPlayerOptions?.adTag != null) {
-      await _videoPlayerPlatform.setAdvertisement(videoPlayerOptions!.adTag!);
+      await videoPlayerPlatform.setAdvertisement(videoPlayerOptions!.adTag!);
     }
 
-    _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
+    _textureId = (await videoPlayerPlatform.create(dataSourceDescription)) ??
         kUninitializedTextureId;
     _creatingCompleter!.complete(null);
 
@@ -362,7 +370,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       }
     }
 
-    _eventSubscription = _videoPlayerPlatform
+    _eventSubscription = videoPlayerPlatform
         .videoEventsFor(_textureId)
         .listen(eventListener, onError: errorListener);
     return initializingCompleter.future;
@@ -376,7 +384,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         _isDisposed = true;
         _timer?.cancel();
         await _eventSubscription?.cancel();
-        await _videoPlayerPlatform.dispose(_textureId);
+        await videoPlayerPlatform.dispose(_textureId);
       }
       _lifeCycleObserver.dispose();
     }
@@ -411,7 +419,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (!value.isInitialized || _isDisposed) {
       return;
     }
-    await _videoPlayerPlatform.setLooping(_textureId, value.isLooping);
+    await videoPlayerPlatform.setLooping(_textureId, value.isLooping);
   }
 
   Future<void> _applyPlayPause() async {
@@ -419,7 +427,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       return;
     }
     if (value.isPlaying) {
-      await _videoPlayerPlatform.play(_textureId);
+      await videoPlayerPlatform.play(_textureId);
 
       // Cancel previous timer.
       _timer?.cancel();
@@ -443,7 +451,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       await _applyPlaybackSpeed();
     } else {
       _timer?.cancel();
-      await _videoPlayerPlatform.pause(_textureId);
+      await videoPlayerPlatform.pause(_textureId);
     }
   }
 
@@ -451,7 +459,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (!value.isInitialized || _isDisposed) {
       return;
     }
-    await _videoPlayerPlatform.setVolume(_textureId, value.volume);
+    await videoPlayerPlatform.setVolume(_textureId, value.volume);
   }
 
   Future<void> _applyPlaybackSpeed() async {
@@ -464,7 +472,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     // the video is manually played from Flutter.
     if (!value.isPlaying) return;
 
-    await _videoPlayerPlatform.setPlaybackSpeed(
+    await videoPlayerPlatform.setPlaybackSpeed(
       _textureId,
       value.playbackSpeed,
     );
@@ -475,7 +483,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (_isDisposed) {
       return null;
     }
-    return await _videoPlayerPlatform.getPosition(_textureId);
+    return await videoPlayerPlatform.getPosition(_textureId);
   }
 
   /// Sets the video's current timestamp to be at [moment]. The next
@@ -492,7 +500,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     } else if (position < const Duration()) {
       position = const Duration();
     }
-    await _videoPlayerPlatform.seekTo(_textureId, position);
+    await videoPlayerPlatform.seekTo(_textureId, position);
     _updatePosition(position);
   }
 
@@ -654,7 +662,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
   Widget build(BuildContext context) {
     return _textureId == VideoPlayerController.kUninitializedTextureId
         ? Container()
-        : _videoPlayerPlatform.buildView(_textureId);
+        : widget.controller.videoPlayerPlatform.buildView(_textureId);
   }
 }
 

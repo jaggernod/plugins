@@ -5,8 +5,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'video_player_test.dart' show FakeVideoPlayerPlatform;
+
+final VideoPlayerPlatform _videoPlayerPlatform = VideoPlayerPlatform.instance
+// This will clear all open videos on the platform when a full restart is
+// performed.
+  ..init();
 
 void main() {
   // This test needs to run first and therefore needs to be the only test
@@ -17,6 +23,7 @@ void main() {
 
     final VideoPlayerController controller = VideoPlayerController.network(
       'https://127.0.0.1',
+      videoPlayerPlatform: _videoPlayerPlatform,
     );
     await controller.initialize();
     expect(fakeVideoPlayerPlatform.calls.first, 'init');

@@ -12,6 +12,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:video_player/video_player.dart';
 
+final VideoPlayerPlatform _videoPlayerPlatform = VideoPlayerPlatform.instance
+  // This will clear all open videos on the platform when a full restart is
+  // performed.
+  ..init();
+
 void main() {
   runApp(
     MaterialApp(
@@ -156,7 +161,10 @@ class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset('assets/Butterfly-209.mp4');
+    _controller = VideoPlayerController.asset(
+      'assets/Butterfly-209.mp4',
+      videoPlayerPlatform: _videoPlayerPlatform,
+    );
 
     _controller.addListener(() {
       setState(() {});
@@ -221,6 +229,7 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     super.initState();
     _controller = VideoPlayerController.network(
       'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+      videoPlayerPlatform: _videoPlayerPlatform,
       closedCaptionFile: _loadCaptions(),
       videoPlayerOptions: VideoPlayerOptions(
         mixWithOthers: true,
@@ -363,8 +372,10 @@ class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
   void initState() {
     super.initState();
 
-    _videoPlayerController =
-        VideoPlayerController.asset('assets/Butterfly-209.mp4');
+    _videoPlayerController = VideoPlayerController.asset(
+      'assets/Butterfly-209.mp4',
+      videoPlayerPlatform: _videoPlayerPlatform,
+    );
     _videoPlayerController.addListener(() {
       if (startedPlaying && !_videoPlayerController.value.isPlaying) {
         Navigator.pop(context);
