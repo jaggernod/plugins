@@ -296,7 +296,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
 
     if (videoPlayerOptions?.adTag != null) {
-      await _videoPlayerPlatform.setAdvertisement(videoPlayerOptions!.adTag);
+      await _videoPlayerPlatform.setAdvertisement(videoPlayerOptions!.adTag!);
     }
 
     _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
