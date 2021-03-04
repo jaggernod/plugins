@@ -6,7 +6,7 @@
 
 /// An example of using the plugin, controlling lifecycle and playback of the
 /// video.
-
+import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
