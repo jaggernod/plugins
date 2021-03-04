@@ -30,7 +30,7 @@ class VideoPlayerValue {
   /// Constructs a video with the given values. Only [duration] is required. The
   /// rest will initialize with default values when unset.
   VideoPlayerValue({
-    required this.duration,
+    this.duration = const Duration(),
     this.size = Size.zero,
     this.position = Duration.zero,
     this.caption = Caption.none,
@@ -296,12 +296,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
 
     if (videoPlayerOptions?.adTag != null) {
-      await _videoPlayerPlatform.setAdvertisement(videoPlayerOptions.adTag);
+      await _videoPlayerPlatform.setAdvertisement(videoPlayerOptions!.adTag);
     }
 
     _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
-    kUninitializedTextureId;
-    _creatingCompleter.complete(null);
+        kUninitializedTextureId;
+    _creatingCompleter!.complete(null);
 
     final Completer<void> initializingCompleter = Completer<void>();
 
@@ -956,9 +956,9 @@ class ClosedCaption extends StatelessWidget {
 
 class AdOverlay extends StatefulWidget {
   const AdOverlay({
-    Key key,
-    @required this.controller,
-  })  : assert(controller != null),
+    Key? key,
+    required this.controller,
+  })   : assert(controller != null),
         super(key: key);
 
   final VideoPlayerController controller;
@@ -969,9 +969,9 @@ class AdOverlay extends StatefulWidget {
 
 class _AdOverlayState extends State<AdOverlay>
     with SingleTickerProviderStateMixin {
-  bool _isAdPlaying;
-  VoidCallback _listener;
-  AnimationController _controller;
+  bool _isAdPlaying = false;
+  late final VoidCallback _listener;
+  late final AnimationController _controller;
 
   int get textureId => widget.controller.textureId;
 
@@ -1039,7 +1039,7 @@ class _AdOverlayState extends State<AdOverlay>
               PlatformViewController controller,
             ) {
               return AndroidViewSurface(
-                controller: controller,
+                controller: controller as AndroidViewController,
                 gestureRecognizers: const <
                     Factory<OneSequenceGestureRecognizer>>{},
                 hitTestBehavior: PlatformViewHitTestBehavior.translucent,
