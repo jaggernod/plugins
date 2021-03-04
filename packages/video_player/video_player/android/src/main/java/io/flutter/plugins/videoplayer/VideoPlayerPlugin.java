@@ -6,8 +6,8 @@ package io.flutter.plugins.videoplayer;
 
 import android.content.Context;
 import android.os.Build;
-import android.util.Log;
 import android.util.LongSparseArray;
+
 import android.view.ViewGroup;
 
 import java.security.KeyManagementException;
@@ -17,6 +17,9 @@ import javax.net.ssl.HttpsURLConnection;
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.engine.loader.FlutterLoader;
+
+import io.flutter.FlutterInjector;
+import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -134,6 +137,7 @@ public class VideoPlayerPlugin implements FlutterPlugin, OverlayRegistrant, Acti
     }
     flutterState.stopListening(binding.getBinaryMessenger());
     flutterState = null;
+    initialize();
   }
 
   private void disposeAllPlayers() {

@@ -220,10 +220,21 @@ final class VideoPlayer implements AdEvent.AdEventListener {
 
     exoPlayer.addListener(
         new EventListener() {
+          private boolean isBuffering = false;
+
+          public void setBuffering(boolean buffering) {
+            if (isBuffering != buffering) {
+              isBuffering = buffering;
+              Map<String, Object> event = new HashMap<>();
+              event.put("event", isBuffering ? "bufferingStart" : "bufferingEnd");
+              eventSink.success(event);
+            }
+          }
 
           @Override
           public void onPlaybackStateChanged(final int playbackState) {
             if (playbackState == Player.STATE_BUFFERING) {
+              setBuffering(true);
               sendBufferingUpdate();
             } else if (playbackState == Player.STATE_READY) {
               if (!isInitialized) {
@@ -234,6 +245,10 @@ final class VideoPlayer implements AdEvent.AdEventListener {
               Map<String, Object> event = new HashMap<>();
               event.put("event", "completed");
               eventSink.success(event);
+            }
+
+            if (playbackState != Player.STATE_BUFFERING) {
+              setBuffering(false);
             }
           }
 
@@ -246,6 +261,7 @@ final class VideoPlayer implements AdEvent.AdEventListener {
 
           @Override
           public void onPlayerError(final ExoPlaybackException error) {
+            setBuffering(false);
             if (eventSink != null) {
               eventSink.error("VideoError", "Video player had error " + error, null);
             }

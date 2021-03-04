@@ -1,3 +1,31 @@
+## 3.0.2
+
+* Update platform_plugin_interface version requirement.
+
+## 3.0.1
+
+* Migrate tests to null safety.
+
+## 3.0.0
+
+* Migrate to null safety.
+* Fix outdated links across a number of markdown files ([#3276](https://github.com/flutter/plugins/pull/3276))
+* Android: Cleanup the NetworkCallback object when a connectivity stream is cancelled
+
+## 2.0.3
+
+* Update Flutter SDK constraint.
+
+## 2.0.2
+
+* Android: Fix IllegalArgumentException.
+* Android: Update Example project.
+
+## 2.0.1
+
+* Remove unused `test` dependency.
+* Update Dart SDK constraint in example.
+
 ## 2.0.0
 
 * [Breaking Change] The `getWifiName`, `getWifiBSSID` and `getWifiIP` are removed to [wifi_info_flutter](https://github.com/flutter/plugins/tree/master/packages/wifi_info_flutter)

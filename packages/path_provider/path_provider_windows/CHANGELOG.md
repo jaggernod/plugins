@@ -1,3 +1,16 @@
+## 2.0.0
+
+* Migrate to null safety
+
+## 0.0.4+4
+
+* Update Flutter SDK constraint.
+
+## 0.0.4+3
+
+* Remove unused `test` dependency.
+* Update Dart SDK constraint in example.
+
 ## 0.0.4+2
 
 * Check in windows/ directory for example/
